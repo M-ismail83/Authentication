@@ -2,6 +2,8 @@ namespace Authentication.DTOs
 {
     public class AuthResponseDTO
     {
-        public string Response { get; set; }
+        public required bool IsSuccess { get; set; }
+        public required string Response { get; set; }
+        public required string Message { get; set; }
     }
 }
