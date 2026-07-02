@@ -121,12 +121,12 @@ namespace Authentication.Services
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
             };
 
-            _redisDb.SetString($"TOTP:{user.Email}", generatedTOTP, options);
+            await _redisDb.SetStringAsync($"TOTP:{user.Email}", generatedTOTP, options);
 
             return new AuthResponseDTO
             {
                 IsSuccess = true,
-                Message = "Login successful.",
+                Message = "Login successful. Totp: " + generatedTOTP,
                 Response = "200 OK"
             };
         }
@@ -145,6 +145,18 @@ namespace Authentication.Services
                 };
             }
 
+            var isUsed =  await _redisDb.GetStringAsync($"TOTPUsed:{user.Email}", default);
+
+            if (!string.IsNullOrEmpty(isUsed))
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "TOTP has already been used.",
+                    Response = "400 Bad Request"
+                };
+            }
+
             var cachedTOTP = await _redisDb.GetStringAsync($"TOTP:{user.Email}", default);
 
             if (cachedTOTP != verifyTOTPRequestDTO.totpCode)
@@ -156,6 +168,12 @@ namespace Authentication.Services
                     Response = "401 Unauthorized"
                 };
             }
+
+            await _redisDb.SetStringAsync($"TOTPUsed:{user.Email}", "used", new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+            });
+
 
             return new AuthResponseDTO
             {

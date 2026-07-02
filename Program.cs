@@ -1,15 +1,23 @@
+using DotNetEnv;
 using Authentication.Services;
+using Authentication.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("PostgresBaglantim");
-builder.Services.AddDbContext<Authentication.Data.dbContext>(options =>
-    options.UseNpgsql(connectionString));
+
+Env.Load();
+
+var postgreConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
+
+var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION");
+
+builder.Services.AddDbContext<dbContext>(options =>
+    options.UseNpgsql(postgreConnectionString));
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("RedisBaglantim");
+    options.Configuration = redisConnectionString;
     options.InstanceName = "AuthApp_";
 });
 

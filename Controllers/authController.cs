@@ -1,5 +1,6 @@
 using Authentication.Services;
 using Microsoft.AspNetCore.Mvc;
+using Authentication.DTOs;
 
 namespace Authentication.Controllers
 {
@@ -14,18 +15,39 @@ namespace Authentication.Controllers
             _authService = authService;
         }
 
-        [HttpPost("login")]
-        public IActionResult Login()
+        [HttpPost("register")]
+        public async Task<ActionResult<AuthResponseDTO>> Register(RegisterDTO registerDto)
         {
-            // Logic will come after
-            return Ok("Login endpoint hit");
+            var register = await _authService.Register(registerDto);
+
+            if (register.IsSuccess == false)
+            {
+                return Unauthorized(new { message = register.Message });
+            }
+
+            return Ok(register);
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthResponseDTO>> Login(LoginRequestDTO loginDto)
+        {
+            var login = await _authService.Login(loginDto);
+            if (login.IsSuccess == false)
+            {
+                return Unauthorized(new { message = login.Message });
+            }
+            return Ok(login);
         }
 
         [HttpPost("totp")]
-        public IActionResult TOTP()
+        public async Task<ActionResult<AuthResponseDTO>> TOTP(VerifyTotpDTO totpDto)
         {
-            // Logic will come after as well
-            return Ok("TOTP endpoint hit");
+            var totp = await _authService.verifyTOTP(totpDto);
+            if (totp.IsSuccess == false)
+            {
+                return Unauthorized(new { message = totp.Message });
+            }
+            return Ok(totp);
         }
     }
 }
